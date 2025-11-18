@@ -89,12 +89,8 @@ def handle_message(msg):
 
     text = body.get("text", "")
 
-    # Convert floats → Decimal for DynamoDB
-    results = convert_float(results)
-    
-    # Update job: completed
-    update_status(job_id, "completed", results)
-
+    # Mark job as processing
+    update_status(job_id, "processing")
 
     # Simulate long-running job
     logger.info(f"Processing job {job_id}: sleeping for {PROCESSING_DELAY} seconds")
@@ -102,8 +98,10 @@ def handle_message(msg):
 
     # Process with Comprehend
     results = process_text_with_comprehend(text)
-
     logger.info(f"Job complete for {job_id}: {results}")
+
+    # Convert floats → Decimal for DynamoDB
+    results = convert_float(results)
 
     # Update job: completed
     update_status(job_id, "completed", results)

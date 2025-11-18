@@ -4,6 +4,17 @@ import json
 import logging
 import boto3
 from botocore.exceptions import ClientError
+from decimal import Decimal
+
+def convert_float(obj):
+    if isinstance(obj, float):
+        return Decimal(str(obj))
+    if isinstance(obj, dict):
+        return {k: convert_float(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [convert_float(v) for v in obj]
+    return obj
+
 
 # ----------------------------------------
 # Logging Setup
@@ -78,8 +89,12 @@ def handle_message(msg):
 
     text = body.get("text", "")
 
-    # Update job: processing
-    update_status(job_id, "processing")
+    # Convert floats → Decimal for DynamoDB
+    results = convert_float(results)
+    
+    # Update job: completed
+    update_status(job_id, "completed", results)
+
 
     # Simulate long-running job
     logger.info(f"Processing job {job_id}: sleeping for {PROCESSING_DELAY} seconds")

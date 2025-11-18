@@ -35,7 +35,7 @@ comprehend = boto3.client("comprehend")
 QUEUE_NAME = os.getenv("QUEUE_NAME")
 TABLE_NAME = os.getenv("TABLE_NAME")
 PROCESSING_DELAY = int(os.getenv("PROCESSING_DELAY", "5"))  # Simulate long jobs
-
+FAIL_MODE = os.getenv("FAIL_MODE", "false").lower() == "true"
 
 # ----------------------------------------
 # Helpers
@@ -88,6 +88,11 @@ def handle_message(msg):
     logger.info(f"Received job: {job_id}")
 
     text = body.get("text", "")
+
+    # Optional forced failure for DLQ testing
+    if FAIL_MODE:
+        logger.error(f"Forced failure enabled. Simulating failure for job {job_id}.")
+        raise Exception("Simulated processing failure")
 
     # Mark job as processing
     update_status(job_id, "processing")
